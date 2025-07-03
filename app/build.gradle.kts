@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "kz.petproject.gts_tz"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "kz.petproject.gts_tz"
