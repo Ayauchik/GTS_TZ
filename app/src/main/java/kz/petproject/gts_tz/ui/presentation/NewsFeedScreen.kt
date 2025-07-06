@@ -5,14 +5,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,26 +34,36 @@ import kz.petproject.gts_tz.ui.model.ArticleCard
  * @param onArticleClick Lambda triggered when a user clicks on an article card.
  * @param currentUserRole The role of the currently logged-in user (e.g., "AUTHOR"). Null if anonymous.
  * @param onFabClick Lambda for the FAB's click action.
+ * @param onSignOutClick Lambda for the sign-out button click action.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsFeedScreen(
     articles: List<Article>,
     onArticleClick: (articleId: Int) -> Unit,
-    currentUserRole: String? = null, // Can be null for a general user
-    onFabClick: () -> Unit = {}
+    currentUserRole: String? = null,
+    onFabClick: () -> Unit = {},
+    onSignOutClick: () -> Unit
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Новости") })
+            TopAppBar(
+                title = { Text("Новости") },
+                actions = {
+                    IconButton(onClick = onSignOutClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Выйти"
+                        )
+                    }
+                }
+            )
         },
-        // --- NEW FLOATING ACTION BUTTON LOGIC ---
         floatingActionButton = {
-            // Only show the FAB if the current user is an Author
             if (currentUserRole == "AUTHOR") {
                 FloatingActionButton(
                     onClick = onFabClick,
-                    ) {
+                ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Создать новую статью"
@@ -62,7 +74,9 @@ fun NewsFeedScreen(
     ) { paddingValues ->
         if (articles.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -88,7 +102,7 @@ fun NewsFeedScreen(
     }
 }
 
-// --- UPDATED & NEW PREVIEWS ---
+// --- UPDATED PREVIEWS ---
 
 @Preview(name = "News Feed (Public User)", showBackground = true)
 @Composable
@@ -98,12 +112,12 @@ fun NewsFeedScreenPreview_Public() {
         NewsFeedScreen(
             articles = publishedArticles,
             onArticleClick = {},
-            currentUserRole = null // This user is not an author, so no FAB
+            currentUserRole = null,
+            onSignOutClick = {}
         )
     }
 }
 
-// --- NEW PREVIEW ---
 @Preview(name = "News Feed (As Author)", showBackground = true)
 @Composable
 fun NewsFeedScreenPreview_AsAuthor() {
@@ -112,8 +126,9 @@ fun NewsFeedScreenPreview_AsAuthor() {
         NewsFeedScreen(
             articles = publishedArticles,
             onArticleClick = {},
-            currentUserRole = "AUTHOR", // This user IS an author, so the FAB will appear
-            onFabClick = {}
+            currentUserRole = "AUTHOR",
+            onFabClick = {},
+            onSignOutClick = {}
         )
     }
 }
@@ -124,7 +139,8 @@ fun NewsFeedScreenPreview_Empty() {
     MaterialTheme {
         NewsFeedScreen(
             articles = emptyList(),
-            onArticleClick = {}
+            onArticleClick = {},
+            onSignOutClick = {}
         )
     }
 }

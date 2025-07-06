@@ -11,10 +11,10 @@ object DummyData {
     // Also add a sample user list to DummyData
 // In object DummyData { ... }
     val users = listOf(
-        User(1, "Admin User", "admin", "admin123", "ADMIN"),
-        User(2, "Иван Петров", "ivan_p", "pass1", "AUTHOR"),
-        User(3, "Мария Сидорова", "maria_s", "pass2", "AUTHOR"),
-        User(4, "Сергей Васильев", "sergey_v", "pass3", "MODERATOR")
+        User("1", "Admin User", "admin", "ADMIN"),
+        User("2", "Иван Петров", "ivan_p", "AUTHOR"),
+        User("3", "Мария Сидорова", "maria_s", "AUTHOR"),
+        User("4", "Сергей Васильев", "sergey_v", "MODERATOR")
     )
     // A list of sample articles covering all possible statuses.
     val articles = listOf(

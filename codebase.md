@@ -86,6 +86,25 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+
+    // Retrofit + Gson
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
+// Coroutines for ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation (libs.koin.androidx.compose)
+
 }
 ```
 
@@ -175,6 +194,16 @@ class ExampleInstrumentedTest {
     </application>
 
 </manifest>
+```
+
+# app\src\main\java\kz\petproject\gts_tz\Constants.kt
+
+```kt
+package kz.petproject.gts_tz
+
+object Constants {
+    const val BASE_URL = "http://10.0.2.2:5000"
+}
 ```
 
 # app\src\main\java\kz\petproject\gts_tz\data\Article.kt
@@ -294,6 +323,81 @@ object DummyData {
 }
 ```
 
+# app\src\main\java\kz\petproject\gts_tz\data\network\api\Api.kt
+
+```kt
+package kz.petproject.gts_tz.data.network.api// data/api/AuthApi.kt
+import kz.petproject.gts_tz.data.network.request.LoginRequest
+import kz.petproject.gts_tz.data.network.response.PostSignInResponse
+import retrofit2.http.Body
+import retrofit2.http.POST
+import retrofit2.Response
+
+interface Api {
+    @POST("/api/v1/user/signin")
+    suspend fun login(@Body request: LoginRequest): Response<PostSignInResponse>
+}
+
+```
+
+# app\src\main\java\kz\petproject\gts_tz\data\network\mapper\UserMapper.kt
+
+```kt
+package kz.petproject.gts_tz.data.network.mapper
+
+import kz.petproject.gts_tz.data.User
+import kz.petproject.gts_tz.data.network.response.PostSignInResponse
+
+class UserMapper {
+    fun fromRemoteToDomain(postSignInResponse: PostSignInResponse): User{
+        return User(
+            id = postSignInResponse.userResponse.id.toInt(),
+            name = postSignInResponse.userResponse.name,
+            login = postSignInResponse.userResponse.login,
+            password = postSignInResponse.userResponse.token,
+            role = postSignInResponse.userResponse.role
+        )
+    }
+}
+```
+
+# app\src\main\java\kz\petproject\gts_tz\data\network\request\LoginRequest.kt
+
+```kt
+package kz.petproject.gts_tz.data.network.request
+
+data class LoginRequest(
+    val login: String,
+    val password: String
+)
+
+```
+
+# app\src\main\java\kz\petproject\gts_tz\data\network\response\PostSignInResponse.kt
+
+```kt
+package kz.petproject.gts_tz.data.network.response
+
+data class PostSignInResponse(
+    val message: String,
+    val userResponse: UserResponse
+)
+```
+
+# app\src\main\java\kz\petproject\gts_tz\data\network\response\UserResponse.kt
+
+```kt
+package kz.petproject.gts_tz.data.network.response
+
+data class UserResponse(
+    val id: String,
+    val login: String,
+    val name: String,
+    val role: String,
+    val token: String
+)
+```
+
 # app\src\main\java\kz\petproject\gts_tz\data\User.kt
 
 ```kt
@@ -313,6 +417,63 @@ data class User(
     val password: String, // For UI demo purposes. In a real app, never store plain text passwords.
     val role: String
 )
+```
+
+# app\src\main\java\kz\petproject\gts_tz\di\NetworkModule.kt
+
+```kt
+package kz.petproject.gts_tz.di
+
+import kz.petproject.gts_tz.Constants
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.dsl.module
+import retrofit2.Converter
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+val networkModule = module {
+    factory<Converter.Factory> { GsonConverterFactory.create() }
+    factory { HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+    }
+
+    factory<OkHttpClient> {
+        OkHttpClient.Builder()
+            .addInterceptor(get<HttpLoggingInterceptor>())
+            .build()
+    }
+
+    factory<Retrofit> {// (baseUrl: String) ->
+        Retrofit.Builder()
+            .baseUrl(Constants.BASE_URL)
+            .addConverterFactory(get())
+            .client(get())
+            .build()
+    }
+
+
+}
+```
+
+# app\src\main\java\kz\petproject\gts_tz\domain\repository\UserRepository.kt
+
+```kt
+package kz.petproject.gts_tz.domain.repository
+
+interface UserRepository {
+
+}
+```
+
+# app\src\main\java\kz\petproject\gts_tz\domain\use_cases\PostSiginInUseCase.kt
+
+```kt
+package kz.petproject.gts_tz.domain.use_cases
+
+interface PostSiginInUseCase {
+}
 ```
 
 # app\src\main\java\kz\petproject\gts_tz\MainActivity.kt
@@ -365,6 +526,40 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
+```
+
+# app\src\main\java\kz\petproject\gts_tz\MyApp.kt
+
+```kt
+package kz.petproject.gts_tz
+
+import android.app.Application
+import kz.petproject.gts_tz.di.networkModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import org.koin.core.parameter.parametersOf
+
+class MyApp : Application() {
+
+    private val modulesToUse = listOf(
+//        viewModelModule,
+//        mapperModule,
+//        repositoryModule,
+        networkModule,
+//        useCaseModule,
+    )
+
+    override fun onCreate() {
+        super.onCreate()
+
+        startKoin {
+            androidContext(this@MyApp)
+            parametersOf(Constants.BASE_URL)
+            modules(modulesToUse)
+        }
+    }
+}
+
 ```
 
 # app\src\main\java\kz\petproject\gts_tz\ui\model\ArticleCard.kt
@@ -537,7 +732,7 @@ private fun StatusChip(status: String) {
 }
 ```
 
-# app\src\main\java\kz\petproject\gts_tz\ui\presentation\admin\RoleChip.kt
+# app\src\main\java\kz\petproject\gts_tz\ui\presentation\admin\AdminDashboardScreen.kt
 
 ```kt
 package kz.petproject.gts_tz.ui.presentation.admin
@@ -2184,6 +2379,12 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.9.0"
 activityCompose = "1.10.1"
 composeBom = "2024.04.01"
+koinCore = "3.2.0"
+koinAndroid = "3.5.0"
+koinAndroidxCompose = "3.5.0"
+serialization = "1.6.3"
+
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -2200,6 +2401,12 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroidxCompose" }
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koinCore" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization"}
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
