@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kz.petproject.gts_tz.data.Article
+import okhttp3.internal.format
 import java.util.Date
 import java.util.Locale
 
@@ -51,7 +52,7 @@ fun ArticleCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Автор: ${article.author} · ${formatDate(article.publishedAt)}",
+                text = "Автор: ${article.author.name} · ${formatDate(article.publishedAt)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

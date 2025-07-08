@@ -35,6 +35,7 @@ fun AdminDashboardRoute(
         onPasswordChange = viewModel::onPasswordChange,
         onRoleChange = viewModel::onRoleChange,
         onCreateUser = viewModel::onCreateUser,
+        onRefresh = viewModel::onRefresh, // <-- Pass the refresh function
         onNavigateUp = { /* In Bottom Nav, this is not typically used */ }
     )
 }

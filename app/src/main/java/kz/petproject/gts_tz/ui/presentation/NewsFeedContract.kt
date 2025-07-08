@@ -6,6 +6,7 @@ object NewsFeedContract {
     data class State(
         val articles: List<Article> = emptyList(),
         val isLoading: Boolean = true,
+        val error: String? = null,
         val currentUserRole: String? = null // TODO: This should come from a user session
     )
 

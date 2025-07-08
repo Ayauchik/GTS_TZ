@@ -4,7 +4,5 @@ import kz.petproject.gts_tz.data.Article
 import kz.petproject.gts_tz.domain.repository.ArticleRepository
 
 class RejectArticleUseCase(private val repository: ArticleRepository) {
-    suspend operator fun invoke(articleId: String, reason: String): Result<Article> {
-        return repository.rejectArticle(articleId, reason)
-    }
+    suspend operator fun invoke(articleId: String, reason: String): Result<Article> = repository.rejectArticle(articleId, reason)
 }

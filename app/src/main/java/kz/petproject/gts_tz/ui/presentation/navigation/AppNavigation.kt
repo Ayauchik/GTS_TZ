@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import kz.petproject.gts_tz.ui.presentation.author.CreatePostRoute
 import kz.petproject.gts_tz.ui.presentation.main.MainScreen
+import kz.petproject.gts_tz.ui.presentation.moderator.ArticleReviewRoute
 
 @Composable
 fun AppNavigation() {
@@ -34,5 +35,13 @@ fun AppNavigation() {
         ) {
             CreatePostRoute(navController = navController)
         }
+
+        composable(
+            route = "article_review/{articleId}",
+            arguments = listOf(navArgument("articleId") { type = NavType.StringType })
+        ) {
+            ArticleReviewRoute(navController = navController)
+        }
+
     }
 }

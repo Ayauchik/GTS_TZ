@@ -49,4 +49,18 @@ class UserRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun getAllUsers(): Result<List<User>> = try {
+        val response = api.getAllUsers()
+        if (response.isSuccessful && response.body() != null) {
+            val userResponses = response.body()!!
+            // Map each UserResponse in the list to a domain User object
+            val domainUsers = userResponses.map { userMapper.fromRemoteToDomain(it) }
+            Result.success(domainUsers)
+        } else {
+            Result.failure(Exception(response.errorBody()?.string() ?: "Failed to fetch users"))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
 }

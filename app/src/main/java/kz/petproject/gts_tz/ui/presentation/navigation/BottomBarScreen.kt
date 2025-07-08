@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,9 +24,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import kz.petproject.gts_tz.ui.presentation.MainViewModel
+import kz.petproject.gts_tz.ui.presentation.NewsFeedRoute
 import kz.petproject.gts_tz.ui.presentation.admin.AdminDashboardRoute
 import kz.petproject.gts_tz.ui.presentation.author.AuthorDashboardRoute
-import kz.petproject.gts_tz.ui.presentation.news_feed.NewsFeedRoute
+import kz.petproject.gts_tz.ui.presentation.moderator.ModeratorDashboardRoute
 import org.koin.androidx.compose.koinViewModel
 
 sealed class BottomBarScreen(
@@ -36,6 +38,8 @@ sealed class BottomBarScreen(
     object NewsFeed : BottomBarScreen("news_feed", "Новости", Icons.Default.Home)
     object AdminPanel : BottomBarScreen("admin_panel", "Админ", Icons.Default.AccountBox)
     object AuthorDashboard : BottomBarScreen("author_dashboard", "Мои статьи", Icons.Default.Create)
+    object ModeratorDashboard :
+        BottomBarScreen("moderator_dashboard", "Модерация", Icons.Default.ThumbUp)
 }
 
 @Composable
@@ -49,7 +53,7 @@ fun MainScreen(
     val bottomBarScreens = when (userRole) {
         "ADMIN" -> listOf(BottomBarScreen.NewsFeed, BottomBarScreen.AdminPanel)
         "AUTHOR" -> listOf(BottomBarScreen.NewsFeed, BottomBarScreen.AuthorDashboard)
-        "MODERATOR" -> listOf(BottomBarScreen.NewsFeed) // TODO: Add Moderator screen
+        "MODERATOR" -> listOf(BottomBarScreen.NewsFeed, BottomBarScreen.ModeratorDashboard)
         else -> listOf(BottomBarScreen.NewsFeed)
     }
 
@@ -62,11 +66,18 @@ fun MainScreen(
                 bottomBarScreens.forEach { screen ->
                     NavigationBarItem(
                         label = { Text(text = screen.title) },
-                        icon = { Icon(imageVector = screen.icon, contentDescription = screen.title) },
+                        icon = {
+                            Icon(
+                                imageVector = screen.icon,
+                                contentDescription = screen.title
+                            )
+                        },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             bottomBarNavController.navigate(screen.route) {
-                                popUpTo(bottomBarNavController.graph.findStartDestination().id) { saveState = true }
+                                popUpTo(bottomBarNavController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -90,10 +101,14 @@ fun MainScreen(
                     }
                 )
             }
-            composable(route = BottomBarScreen.AdminPanel.route) { AdminDashboardRoute() }
+            composable(route = BottomBarScreen.AdminPanel.route) {
+                AdminDashboardRoute()
+            }
             composable(route = BottomBarScreen.AuthorDashboard.route) {
-                // Pass the top-level nav controller for navigating outside the bottom bar
                 AuthorDashboardRoute(navController = navController)
+            }
+            composable(route = BottomBarScreen.ModeratorDashboard.route) {
+                ModeratorDashboardRoute(navController = navController)
             }
         }
     }

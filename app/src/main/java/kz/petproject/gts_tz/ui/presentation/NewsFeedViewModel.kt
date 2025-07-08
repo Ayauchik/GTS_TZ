@@ -8,11 +8,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kz.petproject.gts_tz.data.DummyData
 import kz.petproject.gts_tz.data.local.SessionManager
+import kz.petproject.gts_tz.domain.use_cases.GetPublishedArticledUseCase
 
 class NewsFeedViewModel(
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val getPublishedArticlesUseCase: GetPublishedArticledUseCase // <-- New dependency
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NewsFeedContract.State())
@@ -22,14 +23,41 @@ class NewsFeedViewModel(
     val effect = _effect.receiveAsFlow()
 
     init {
+        // Automatically load content when the ViewModel is created
+        loadContent()
+    }
+
+    /**
+     * Public function to allow the UI to trigger a refresh.
+     */
+    fun onRefresh() {
         loadContent()
     }
 
     private fun loadContent() {
         viewModelScope.launch {
-            // In a real app, this would be a repository call to fetch articles.
-            val publishedArticles = DummyData.articles.filter { it.status == "PUBLISHED" }
-            _state.update { it.copy(articles = publishedArticles, isLoading = false) }
+            // Set loading state to true before the network call
+            _state.update { it.copy(isLoading = true, error = null) }
+            getPublishedArticlesUseCase()
+                .onSuccess { articles ->
+                    // On success, update the state with the fetched articles
+                    _state.update {
+                        it.copy(
+                            articles = articles,
+                            isLoading = false,
+                            currentUserRole = sessionManager.getUserRole()
+                        )
+                    }
+                }
+                .onFailure { exception ->
+                    // On failure, update the state with an error message
+                    _state.update {
+                        it.copy(
+                            error = exception.message ?: "An unknown error occurred",
+                            isLoading = false
+                        )
+                    }
+                }
         }
     }
 

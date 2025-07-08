@@ -1,10 +1,9 @@
-package kz.petproject.gts_tz.ui.presentation.news_feed
+package kz.petproject.gts_tz.ui.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.navigation.NavController
 import kz.petproject.gts_tz.ui.presentation.NewsFeedContract
 import kz.petproject.gts_tz.ui.presentation.NewsFeedScreen
 import kz.petproject.gts_tz.ui.presentation.NewsFeedViewModel
@@ -12,7 +11,6 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun NewsFeedRoute(
-    // It no longer needs the NavController directly
     onNavigateToAuth: () -> Unit,
     viewModel: NewsFeedViewModel = koinViewModel(),
 ) {
@@ -22,7 +20,6 @@ fun NewsFeedRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is NewsFeedContract.Effect.NavigateToAuth -> {
-                    // Call the hoisted lambda instead of navigating directly
                     onNavigateToAuth()
                 }
             }
@@ -31,9 +28,10 @@ fun NewsFeedRoute(
 
     NewsFeedScreen(
         articles = state.articles,
-        onArticleClick = { /* TODO: Implement navigation to article details */ },
+        isLoading = state.isLoading,
         currentUserRole = state.currentUserRole,
-        onFabClick = { /* TODO: Implement navigation to create post */ },
-        onSignOutClick = viewModel::onSignOutClicked
+        onArticleClick = { /* TODO: Navigate to article detail screen */ },
+        onSignOutClick = viewModel::onSignOutClicked,
+        onRefresh = viewModel::onRefresh // Pass the refresh lambda to the UI
     )
 }

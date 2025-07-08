@@ -6,20 +6,43 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kz.petproject.gts_tz.data.DummyData
 import kz.petproject.gts_tz.data.network.request.CreateUserRequest
 import kz.petproject.gts_tz.domain.use_cases.CreateUserUseCase
+import kz.petproject.gts_tz.domain.use_cases.GetAllUsersUseCase
 
 class AdminViewModel(
-    private val createUserUseCase: CreateUserUseCase
+    private val createUserUseCase: CreateUserUseCase,
+    private val getAllUsersUseCase: GetAllUsersUseCase // <-- New dependency
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AdminContract.State())
     val state = _state.asStateFlow()
 
     init {
-        //TODO: For now, load dummy users. Later, this could be a network call.
-        _state.update { it.copy(users = DummyData.users) }
+        // Fetch real users when the ViewModel is created
+        loadUsers()
+    }
+
+    fun onRefresh() {
+        loadUsers()
+    }
+
+    private fun loadUsers() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+            getAllUsersUseCase()
+                .onSuccess { users ->
+                    _state.update { it.copy(users = users, isLoading = false) }
+                }
+                .onFailure { exception ->
+                    _state.update {
+                        it.copy(
+                            error = exception.message ?: "Failed to load users",
+                            isLoading = false
+                        )
+                    }
+                }
+        }
     }
 
     fun onNameChange(name: String) = _state.update { it.copy(newUserName = name, error = null, successMessage = null) }
@@ -29,6 +52,8 @@ class AdminViewModel(
 
     fun onCreateUser() {
         viewModelScope.launch {
+            // To prevent the full-screen loader from showing, we keep the user list.
+            // The button's internal spinner will indicate the loading state.
             _state.update { it.copy(isLoading = true, error = null, successMessage = null) }
 
             val request = CreateUserRequest(
@@ -44,8 +69,7 @@ class AdminViewModel(
                         it.copy(
                             isLoading = false,
                             successMessage = "User '${newUser.name}' created successfully!",
-                            users = it.users + newUser, // Add new user to the list
-                            // Reset form fields
+                            users = it.users + newUser,
                             newUserName = "",
                             newUserLogin = "",
                             newUserPassword = "",

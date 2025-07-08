@@ -3,7 +3,9 @@ package kz.petproject.gts_tz.di
 import kz.petproject.gts_tz.domain.use_cases.ApproveArticleUseCase
 import kz.petproject.gts_tz.domain.use_cases.CreateArticleUseCase
 import kz.petproject.gts_tz.domain.use_cases.CreateUserUseCase
+import kz.petproject.gts_tz.domain.use_cases.DeleteArticleUseCase
 import kz.petproject.gts_tz.domain.use_cases.EditArticleUseCase
+import kz.petproject.gts_tz.domain.use_cases.GetAllUsersUseCase
 import kz.petproject.gts_tz.domain.use_cases.GetArticleByIdUseCase
 import kz.petproject.gts_tz.domain.use_cases.GetArticlesForModerationUseCase
 import kz.petproject.gts_tz.domain.use_cases.GetMyArticlesUseCase
@@ -25,4 +27,6 @@ val useCaseModule = module {
     factory { GetArticlesForModerationUseCase(repository = get()) }
     factory { GetPublishedArticledUseCase(repository = get()) }
     factory { EditArticleUseCase(articleRepository = get()) }
+    factory { DeleteArticleUseCase(articleRepository = get()) }
+    factory { GetAllUsersUseCase(userRepository = get()) }
 }

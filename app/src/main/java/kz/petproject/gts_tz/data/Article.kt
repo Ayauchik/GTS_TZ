@@ -19,5 +19,6 @@ data class Article(
     val status: String,
     val rejectionReason: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val publishedAt: Long? = null
+    val publishedAt: Long? = System.currentTimeMillis(),
+    val updatedAt: Long? = System.currentTimeMillis()
 )

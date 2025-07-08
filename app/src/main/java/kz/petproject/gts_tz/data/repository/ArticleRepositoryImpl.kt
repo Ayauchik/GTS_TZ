@@ -46,6 +46,18 @@ class ArticleRepositoryImpl(
         Result.failure(e)
     }
 
+    override suspend fun deleteArticle(articleId: String): Result<Unit> = try {
+        // Retrofit will now attempt to parse the response into DeleteArticleResponse
+        val response = api.deleteArticle(articleId)
+
+        if (response.isSuccessful && response.body() != null) {
+            Result.success(Unit)
+        } else {
+            Result.failure(Exception(response.errorBody()?.string() ?: "Failed to delete article"))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
     override suspend fun getPublishedArticles(): Result<List<Article>> = try {
         val response = api.getPublishedArticles()
         if (response.isSuccessful && response.body() != null) {
@@ -97,11 +109,7 @@ class ArticleRepositoryImpl(
         if (response.isSuccessful && response.body() != null) {
             Result.success(mapper.fromRemoteListToDomain(response.body()!!))
         } else {
-            Result.failure(
-                Exception(
-                    response.errorBody()?.string() ?: "Failed to get articles for moderation"
-                )
-            )
+            Result.failure(Exception(response.errorBody()?.string() ?: "Failed to get moderation queue"))
         }
     } catch (e: Exception) {
         Result.failure(e)
@@ -110,7 +118,7 @@ class ArticleRepositoryImpl(
     override suspend fun approveArticle(articleId: String): Result<Article> = try {
         val response = api.approveArticle(articleId)
         if (response.isSuccessful && response.body() != null) {
-            Result.success(mapper.fromRemoteToDomain(response.body()!!))
+            Result.success(mapper.fromRemoteToDomain(response.body()!!.article))
         } else {
             Result.failure(Exception(response.errorBody()?.string() ?: "Failed to approve article"))
         }
@@ -121,7 +129,7 @@ class ArticleRepositoryImpl(
     override suspend fun rejectArticle(articleId: String, reason: String): Result<Article> = try {
         val response = api.rejectArticle(articleId, RejectRequest(reason))
         if (response.isSuccessful && response.body() != null) {
-            Result.success(mapper.fromRemoteToDomain(response.body()!!))
+            Result.success(mapper.fromRemoteToDomain(response.body()!!.article))
         } else {
             Result.failure(Exception(response.errorBody()?.string() ?: "Failed to reject article"))
         }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kz.petproject.gts_tz.domain.use_cases.CreateArticleUseCase
+import kz.petproject.gts_tz.domain.use_cases.DeleteArticleUseCase
 import kz.petproject.gts_tz.domain.use_cases.EditArticleUseCase
 import kz.petproject.gts_tz.domain.use_cases.GetArticleByIdUseCase
 import kz.petproject.gts_tz.domain.use_cases.SubmitArticleUseCase
@@ -22,7 +23,8 @@ data class CreatePostState(
     val isEditing: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val status: String? = "DRAFT"
+    val status: String? = "DRAFT",
+    val showDeleteConfirmDialog: Boolean = false
 )
 
 sealed class CreatePostEffect {
@@ -36,6 +38,7 @@ class CreatePostViewModel(
     private val submitArticleUseCase: SubmitArticleUseCase,
     private val getArticleByIdUseCase: GetArticleByIdUseCase,
     private val editArticleUseCase: EditArticleUseCase,
+    private val deleteArticleUseCase: DeleteArticleUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -74,6 +77,28 @@ class CreatePostViewModel(
                         )
                     }
                     Log.e("viewmodel", "changing the isEditing to true ${_state.value.isEditing}, after loading")
+                }
+                .onFailure { handleFailure(it) }
+        }
+    }
+
+    fun onDeleteClicked() {
+        _state.update { it.copy(showDeleteConfirmDialog = true) }
+    }
+
+    fun onDeleteDialogDismiss() {
+        _state.update { it.copy(showDeleteConfirmDialog = false) }
+    }
+
+    fun onDeleteConfirmed() {
+        viewModelScope.launch {
+            val articleId = state.value.articleId ?: return@launch
+            _state.update { it.copy(isLoading = true, showDeleteConfirmDialog = false) }
+
+            deleteArticleUseCase(articleId)
+                .onSuccess {
+                    _effect.send(CreatePostEffect.ShowSnackbar("Article deleted successfully"))
+                    _effect.send(CreatePostEffect.NavigateBack) // Use the success signal
                 }
                 .onFailure { handleFailure(it) }
         }

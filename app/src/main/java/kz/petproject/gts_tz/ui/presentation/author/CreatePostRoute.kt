@@ -43,6 +43,10 @@ fun CreatePostRoute(
         onSubmitClick = viewModel::onSubmitClicked,
         onNavigateUp = { navController.popBackStack() },
         isLoading = state.isLoading,
-        status = state.status ?: "DRAFT"
+        status = state.status ?: "DRAFT",
+        showDeleteDialog = state.showDeleteConfirmDialog,
+        onDeleteClick = viewModel::onDeleteClicked,
+        onDeleteConfirm = viewModel::onDeleteConfirmed,
+        onDeleteDismiss = viewModel::onDeleteDialogDismiss
     )
 }

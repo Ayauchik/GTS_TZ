@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -33,12 +34,24 @@ fun CreatePostScreen(
     content: String,
     onContentChange: (String) -> Unit,
     isEditing: Boolean,
+    status: String,
+    isLoading: Boolean,
+    showDeleteDialog: Boolean, // <-- New parameter
     onSaveClick: () -> Unit,
     onSubmitClick: () -> Unit,
-    onNavigateUp: () -> Unit,
-    isLoading: Boolean,
-    status: String
+    onDeleteClick: () -> Unit, // <-- New parameter
+    onDeleteConfirm: () -> Unit, // <-- New parameter
+    onDeleteDismiss: () -> Unit, // <-- New parameter
+    onNavigateUp: () -> Unit
 ) {
+
+    if (showDeleteDialog) {
+        DeleteConfirmDialog(
+            onDismiss = onDeleteDismiss,
+            onConfirm = onDeleteConfirm
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -46,6 +59,18 @@ fun CreatePostScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp, enabled = !isLoading) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                    }
+                },
+                actions = {
+                    val isDeletable = isEditing && status in listOf("DRAFT", "REJECTED")
+                    if (isDeletable) {
+                        IconButton(onClick = onDeleteClick, enabled = !isLoading) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Article",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             )
@@ -111,6 +136,31 @@ fun CreatePostScreen(
     }
 }
 
+@Composable
+private fun DeleteConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Confirm Deletion") },
+        text = { Text("Are you sure you want to permanently delete this article?") },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
 @Preview(name = "Create New Post", showBackground = true)
 @Composable
 fun CreatePostScreenPreview_New() {
@@ -124,11 +174,15 @@ fun CreatePostScreenPreview_New() {
             content = content,
             onContentChange = { content = it },
             isEditing = false,
-            onSaveClick = {},
-            onSubmitClick = { },
-            onNavigateUp = { },
+            status = "DRAFT",
             isLoading = false,
-            status = "DRAFT"
+            showDeleteDialog = false,
+            onSaveClick = {},
+            onSubmitClick = {},
+            onDeleteClick = {},
+            onDeleteConfirm = {},
+            onDeleteDismiss = {},
+            onNavigateUp = {}
         )
     }
 }

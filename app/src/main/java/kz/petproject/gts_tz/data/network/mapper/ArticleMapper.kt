@@ -30,7 +30,8 @@ class ArticleMapper {
             status = response.status.uppercase(),
             rejectionReason = response.rejectionReason,
             createdAt = parseIsoDate(response.createdAt) ?: System.currentTimeMillis(),
-            publishedAt = parseIsoDate(response.publishedAt)
+            publishedAt = parseIsoDate(response.publishedAt) ?: System.currentTimeMillis(),
+            updatedAt = parseIsoDate(response.updatedAt) ?: System.currentTimeMillis()
         )
     }
 

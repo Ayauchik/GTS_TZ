@@ -6,9 +6,9 @@ data class ArticleResponse(
     @SerializedName("_id") val id: String,
     val title: String,
     val content: String,
-    val author: AuthorResponse, // <-- CRITICAL FIX: Changed back to a nested object
+    val author: AuthorResponse,
     val status: String,
-    @SerializedName("moderatorComments") // Match the backend model field
+    @SerializedName("moderatorComments")
     val rejectionReason: String? = null,
     val createdAt: String,
     val publishedAt: String? = null,

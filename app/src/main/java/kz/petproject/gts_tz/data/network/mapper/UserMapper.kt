@@ -2,6 +2,7 @@ package kz.petproject.gts_tz.data.network.mapper
 
 import kz.petproject.gts_tz.data.User
 import kz.petproject.gts_tz.data.network.response.CreateUserResponse
+import kz.petproject.gts_tz.data.network.response.GetAllUsersResponseItem
 import kz.petproject.gts_tz.data.network.response.PostSignInResponse
 
 class UserMapper {
@@ -20,6 +21,15 @@ class UserMapper {
             name = createUserResponse.user.name,
             login = createUserResponse.user.login,
             role = createUserResponse.user.role,
+        )
+    }
+
+    fun fromRemoteToDomain(getAllUsersResponseItem: GetAllUsersResponseItem): User{
+        return User(
+            id = getAllUsersResponseItem._id,
+            name = getAllUsersResponseItem.name,
+            login = getAllUsersResponseItem.login,
+            role = getAllUsersResponseItem.role,
         )
     }
 }

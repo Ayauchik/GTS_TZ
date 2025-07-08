@@ -10,11 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kz.petproject.gts_tz.R
 
 /**
  * A stateless authentication screen.
@@ -66,6 +68,9 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val hideIcon =  painterResource(R.drawable.closed_eye)
+        val showIcon = painterResource(R.drawable.opened_eye)
+
         // Password Field
         OutlinedTextField(
             value = password,
@@ -77,13 +82,16 @@ fun AuthScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             trailingIcon = {
                 val image = if (passwordVisible)
-                    Icons.Filled.Favorite
-                else Icons.Filled.FavoriteBorder
+                    showIcon
+                else hideIcon
 
                 val description = if (passwordVisible) "Скрыть пароль" else "Показать пароль"
 
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, description)
+                    Icon(
+                        painter = image,
+                        description,
+                        modifier = Modifier.size(24.dp))
                 }
             },
             isError = error != null
