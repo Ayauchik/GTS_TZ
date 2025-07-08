@@ -15,7 +15,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GTS_TZ"
         tools:targetApi="31"
-        android:usesCleartextTraffic="true"
         >
         <activity
             android:name=".MainActivity"
