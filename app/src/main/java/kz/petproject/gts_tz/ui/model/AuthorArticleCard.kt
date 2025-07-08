@@ -25,7 +25,7 @@ import kz.petproject.gts_tz.data.Article
 @Composable
 fun AuthorArticleCard(
     article: Article,
-    onArticleClick: (articleId: Int) -> Unit
+    onArticleClick: (articleId: String) -> Unit
 ) {
     val isClickable = article.status in listOf("REJECTED", "DRAFT")
     

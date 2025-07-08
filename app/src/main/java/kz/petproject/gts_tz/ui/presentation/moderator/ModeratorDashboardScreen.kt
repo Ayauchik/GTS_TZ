@@ -28,7 +28,7 @@ import kz.petproject.gts_tz.data.DummyData
 @Composable
 fun ModeratorDashboardScreen(
     articlesForModeration: List<Article>,
-    onArticleClick: (articleId: Int) -> Unit,
+    onArticleClick: (articleId: String) -> Unit,
     onNavigateUp: () -> Unit
 ) {
     Scaffold(
@@ -72,7 +72,7 @@ fun ModeratorDashboardScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(article.title, style = MaterialTheme.typography.titleMedium)
-                                Text("Автор: ${article.author.name}", style = MaterialTheme.typography.bodySmall)
+                                Text("Автор: ${article.author}", style = MaterialTheme.typography.bodySmall)
                             }
                             Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Проверить статью")
                         }

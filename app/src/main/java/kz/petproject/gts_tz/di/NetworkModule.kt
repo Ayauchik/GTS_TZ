@@ -19,7 +19,7 @@ val networkModule = module {
         }
     }
 
-    factory { AuthInterceptor(tokenManager = get()) }
+    factory { AuthInterceptor(sessionManager = get()) }
 
     factory<OkHttpClient> {
         OkHttpClient.Builder()

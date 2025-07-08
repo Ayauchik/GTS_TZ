@@ -68,7 +68,7 @@ fun ArticleReviewScreen(
                 Text(article.title, style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Автор: ${article.author.name}",
+                    "Автор: ${article.author}",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

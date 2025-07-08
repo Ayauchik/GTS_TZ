@@ -40,7 +40,7 @@ import kz.petproject.gts_tz.ui.model.ArticleCard
 @Composable
 fun NewsFeedScreen(
     articles: List<Article>,
-    onArticleClick: (articleId: Int) -> Unit,
+    onArticleClick: (articleId: String) -> Unit,
     currentUserRole: String? = null,
     onFabClick: () -> Unit = {},
     onSignOutClick: () -> Unit

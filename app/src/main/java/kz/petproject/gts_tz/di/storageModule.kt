@@ -1,9 +1,8 @@
 package kz.petproject.gts_tz.di
 
-import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import kz.petproject.gts_tz.data.local.TokenManager
+import kz.petproject.gts_tz.data.local.SessionManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -22,5 +21,5 @@ val storageModule = module {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
     }
-    single { TokenManager(prefs = get()) }
+    single { SessionManager(prefs = get()) }
 }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -18,9 +19,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kz.petproject.gts_tz.data.Article
@@ -40,21 +45,32 @@ import kz.petproject.gts_tz.ui.model.AuthorArticleCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthorDashboardScreen(
-    authorName: String,
     authorArticles: List<Article>,
-    onArticleClick: (articleId: Int) -> Unit,
+    onArticleClick: (articleId: String) -> Unit,
     onFabClick: () -> Unit,
+    onRefresh: () -> Unit,
+    isLoading: Boolean = false,
     onNavigateUp: () -> Unit
 ) {
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            onRefresh()
+        }
+    }
+
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            pullToRefreshState.endRefresh()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Мои статьи") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.Default.ArrowBack, "Назад")
-                    }
-                }
+                title = { Text("Мои статьи") }
             )
         },
         floatingActionButton = {
@@ -63,62 +79,86 @@ fun AuthorDashboardScreen(
             }
         }
     ) { paddingValues ->
-        if (authorArticles.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "Вы еще не написали ни одной статьи.\nНажмите '+' чтобы начать.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(authorArticles, key = { it.id }) { article ->
-                    AuthorArticleCard(
-                        article = article,
-                        onArticleClick = onArticleClick
+
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        ) {
+
+            if (authorArticles.isEmpty() && isLoading && !pullToRefreshState.isRefreshing) {
+                // Show a full-screen loader only on initial load
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (authorArticles.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Вы еще не написали ни одной статьи.\nНажмите '+' чтобы начать.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(authorArticles, key = { it.id }) { article ->
+                        AuthorArticleCard(
+                            article = article,
+                            onArticleClick = onArticleClick
+                        )
+                    }
+                }
             }
+
+            // 5. Place the PullToRefreshContainer at the top center of the Box
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }
 
 
 // --- PREVIEWS ---
-
-@Preview(name = "Author Dashboard - With Posts", showBackground = true)
-@Composable
-fun AuthorDashboardScreenPreview_WithPosts() {
-    MaterialTheme {
-        AuthorDashboardScreen(
-            authorName = "Иван Петров",
-            // We get all articles written by author with id 1
-            authorArticles = DummyData.articles.filter { it.author.id == 1 },
-            onArticleClick = {},
-            onFabClick = {},
-            onNavigateUp = {}
-        )
-    }
-}
-
-@Preview(name = "Author Dashboard - Empty State", showBackground = true)
-@Composable
-fun AuthorDashboardScreenPreview_Empty() {
-    MaterialTheme {
-        AuthorDashboardScreen(
-            authorName = "Новый Автор",
-            authorArticles = emptyList(), // No articles yet
-            onArticleClick = {},
-            onFabClick = {},
-            onNavigateUp = {}
-        )
-    }
-}
+//
+//@Preview(name = "Author Dashboard - With Posts", showBackground = true)
+//@Composable
+//fun AuthorDashboardScreenPreview_WithPosts() {
+//    MaterialTheme {
+//        AuthorDashboardScreen(
+//            authorName = "Иван Петров",
+//            // We get all articles written by author with id 1
+//            authorArticles = DummyData.articles,
+//            onArticleClick = {},
+//            onFabClick = {},
+//            onNavigateUp = {}
+//        )
+//    }
+//}
+//
+//@Preview(name = "Author Dashboard - Empty State", showBackground = true)
+//@Composable
+//fun AuthorDashboardScreenPreview_Empty() {
+//    MaterialTheme {
+//        AuthorDashboardScreen(
+//            authorName = "Новый Автор",
+//            authorArticles = emptyList(), // No articles yet
+//            onArticleClick = {},
+//            onFabClick = {},
+//            onNavigateUp = {}
+//        )
+//    }
+//}

@@ -12,7 +12,7 @@ package kz.petproject.gts_tz.data
  * @property publishedAt An optional timestamp (in milliseconds) when the article was published.
  */
 data class Article(
-    val id: Int,
+    val id: String,
     val title: String,
     val content: String,
     val author: Author,

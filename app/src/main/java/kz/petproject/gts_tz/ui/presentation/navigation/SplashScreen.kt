@@ -8,16 +8,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
-import kz.petproject.gts_tz.data.local.TokenManager
 import kotlinx.coroutines.delay
+import kz.petproject.gts_tz.data.local.SessionManager
 import org.koin.compose.koinInject
 
 @Composable
-fun SplashScreen(navController: NavController, tokenManager: TokenManager = koinInject()) {
+fun SplashScreen(navController: NavController, sessionManager: SessionManager = koinInject()) {
     LaunchedEffect(key1 = true) {
         delay(1000) // Simulate a loading delay
-        val token = tokenManager.getToken()
-        val destination = if (token.isNullOrBlank()) "auth" else "news_feed"
+        val token = sessionManager.getToken()
+
+        // The fix is here: navigate to "main_screen" if logged in, not "news_feed"
+        val destination = if (token.isNullOrBlank()) "auth" else "main_screen"
+
         navController.navigate(destination) {
             popUpTo("splash") { inclusive = true }
         }

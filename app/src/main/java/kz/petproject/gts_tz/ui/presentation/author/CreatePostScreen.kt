@@ -1,5 +1,6 @@
 package kz.petproject.gts_tz.ui.presentation.author
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,9 +20,10 @@ import androidx.compose.ui.unit.dp
  * @param content The current value for the article content.
  * @param onContentChange Lambda called when the content text changes.
  * @param isEditing A boolean flag to indicate if the screen is in "edit" mode.
- *                  This changes the UI text (e.g., "New Post" vs "Edit Post").
+ * @param onSaveClick Lambda called when the user clicks the save draft button.
  * @param onSubmitClick Lambda called when the user clicks the submit button.
  * @param onNavigateUp Lambda for handling back navigation.
+ * @param isLoading True if a network operation is in progress.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,15 +33,18 @@ fun CreatePostScreen(
     content: String,
     onContentChange: (String) -> Unit,
     isEditing: Boolean,
+    onSaveClick: () -> Unit,
     onSubmitClick: () -> Unit,
-    onNavigateUp: () -> Unit
+    onNavigateUp: () -> Unit,
+    isLoading: Boolean,
+    status: String
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(if (isEditing) "Редактирование статьи" else "Новая статья") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
+                    IconButton(onClick = onNavigateUp, enabled = !isLoading) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
                     }
                 }
@@ -51,52 +56,61 @@ fun CreatePostScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()), // Makes the column scrollable
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Title Field
             OutlinedTextField(
                 value = title,
                 onValueChange = onTitleChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Заголовок") },
-                singleLine = true
+                singleLine = true,
+                enabled = !isLoading
             )
 
-            // Content Field
             OutlinedTextField(
                 value = content,
                 onValueChange = onContentChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .defaultMinSize(minHeight = 200.dp), // Give it a good minimum height
-                label = { Text("Текст статьи") }
+                    .defaultMinSize(minHeight = 200.dp),
+                label = { Text("Текст статьи") },
+                enabled = !isLoading
             )
 
-            Spacer(modifier = Modifier.weight(1f)) // Pushes the button to the bottom
+            Spacer(modifier = Modifier.weight(1f))
 
-            // Submit Button
-            Button(
-                onClick = onSubmitClick,
-                modifier = Modifier.fillMaxWidth(),
-                // Button is disabled if title or content is blank
-                enabled = title.isNotBlank() && content.isNotBlank()
-            ) {
-                Text(
-                    text = if (isEditing) "Сохранить изменения" else "Отправить на модерацию",
-                    style = MaterialTheme.typography.titleMedium
-                )
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.fillMaxWidth().wrapContentWidth())
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onSaveClick,
+                        modifier = Modifier.weight(1f),
+                        enabled = title.isNotBlank() && content.isNotBlank()
+                    ) {
+                        Text(text = "Сохранить как черновик")
+                    }
+
+                    val isSubmittable = status in listOf("DRAFT", "REJECTED")
+
+                    Button(
+                        onClick = onSubmitClick,
+                        modifier = Modifier.weight(1f),
+                        // Disable if fields are blank OR if the status is not submittable
+                        enabled = title.isNotBlank() && content.isNotBlank() && isSubmittable
+                    ) {
+                        Text(text = "На модерацию")
+                    }
+                }
             }
         }
     }
 }
 
-// --- PREVIEWS ---
-
-/**
- * Stateful preview for creating a new post.
- * This pattern allows you to interact with the UI in the preview pane.
- */
 @Preview(name = "Create New Post", showBackground = true)
 @Composable
 fun CreatePostScreenPreview_New() {
@@ -110,30 +124,11 @@ fun CreatePostScreenPreview_New() {
             content = content,
             onContentChange = { content = it },
             isEditing = false,
-            onSubmitClick = { /* Clicked! */ },
-            onNavigateUp = { /* Nav up! */ }
-        )
-    }
-}
-
-/**
- * Stateful preview for editing an existing post.
- */
-@Preview(name = "Edit Existing Post", showBackground = true)
-@Composable
-fun CreatePostScreenPreview_Editing() {
-    var title by remember { mutableStateOf("Архитектура MVVM") }
-    var content by remember { mutableStateOf("MVVM (Model-View-ViewModel) - это...") }
-
-    MaterialTheme {
-        CreatePostScreen(
-            title = title,
-            onTitleChange = { title = it },
-            content = content,
-            onContentChange = { content = it },
-            isEditing = true,
-            onSubmitClick = { /* Clicked! */ },
-            onNavigateUp = { /* Nav up! */ }
+            onSaveClick = {},
+            onSubmitClick = { },
+            onNavigateUp = { },
+            isLoading = false,
+            status = "DRAFT"
         )
     }
 }

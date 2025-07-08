@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kz.petproject.gts_tz.data.DummyData
-import kz.petproject.gts_tz.data.local.TokenManager
+import kz.petproject.gts_tz.data.local.SessionManager
 
 class NewsFeedViewModel(
-    private val tokenManager: TokenManager
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NewsFeedContract.State())
@@ -35,7 +35,7 @@ class NewsFeedViewModel(
 
     fun onSignOutClicked() {
         viewModelScope.launch {
-            tokenManager.clearToken()
+            sessionManager.clearSession()
             _effect.send(NewsFeedContract.Effect.NavigateToAuth)
         }
     }

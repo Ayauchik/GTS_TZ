@@ -51,7 +51,7 @@ fun ArticleCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Автор: ${article.author.name} · ${formatDate(article.publishedAt)}",
+                text = "Автор: ${article.author} · ${formatDate(article.publishedAt)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

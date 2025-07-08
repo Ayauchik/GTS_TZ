@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
@@ -24,8 +23,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kz.petproject.gts_tz.data.DummyData
 import kz.petproject.gts_tz.data.User
-
-// --- Helper UI Components ---
 
 @Composable
 private fun RoleChip(role: String) {
@@ -53,43 +50,30 @@ private fun RoleChip(role: String) {
     )
 }
 
-// --- Main Screen ---
-
-/**
- * The screen for an administrator to manage users.
- *
- * @param users List of all users in the system.
- * @param onCreateUser Lambda triggered to create a new user with a given name and role.
- * @param onNavigateUp Lambda for back navigation.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
-    users: List<User>,
-    onCreateUser: (name: String, login: String, password: String, role: String) -> Unit,
-    onNavigateUp: () -> Unit
+    state: AdminContract.State,
+    snackbarHost: @Composable () -> Unit,
+    onNameChange: (String) -> Unit,
+    onLoginChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onRoleChange: (String) -> Unit,
+    onCreateUser: () -> Unit,
+    onNavigateUp: () -> Unit // Kept for preview, but not used in bottom nav
 ) {
-    var newUserName by remember { mutableStateOf("") }
-    var newUserLogin by remember { mutableStateOf("") }
-    var newUserPassword by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
-
     val roles = listOf("AUTHOR", "MODERATOR")
-    var selectedRole by remember { mutableStateOf<String?>(null) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Панель администратора") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.Default.ArrowBack, "Назад")
-                    }
-                }
             )
-        }
-    ) {  paddingValues ->
+        },
+        snackbarHost = snackbarHost
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -97,28 +81,27 @@ fun AdminDashboardScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- User Creation Form ---
             Text("Создать нового пользователя", style = MaterialTheme.typography.titleLarge)
 
             OutlinedTextField(
-                value = newUserName,
-                onValueChange = { newUserName = it },
+                value = state.newUserName,
+                onValueChange = onNameChange,
                 label = { Text("Имя и фамилия") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
             OutlinedTextField(
-                value = newUserLogin,
-                onValueChange = { newUserLogin = it },
+                value = state.newUserLogin,
+                onValueChange = onLoginChange,
                 label = { Text("Логин") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
             OutlinedTextField(
-                value = newUserPassword,
-                onValueChange = { newUserPassword = it },
+                value = state.newUserPassword,
+                onValueChange = onPasswordChange,
                 label = { Text("Пароль") },
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -137,7 +120,7 @@ fun AdminDashboardScreen(
                 onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }
             ) {
                 OutlinedTextField(
-                    value = selectedRole?.replaceFirstChar { it.titlecase() } ?: "Выберите роль",
+                    value = state.selectedRole?.replaceFirstChar { it.titlecase() } ?: "Выберите роль",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Роль") },
@@ -154,7 +137,7 @@ fun AdminDashboardScreen(
                         DropdownMenuItem(
                             text = { Text(role.replaceFirstChar { it.titlecase() }) },
                             onClick = {
-                                selectedRole = role
+                                onRoleChange(role)
                                 isDropdownExpanded = false
                             }
                         )
@@ -163,27 +146,23 @@ fun AdminDashboardScreen(
             }
 
             Button(
-                onClick = {
-                    onCreateUser(newUserName, newUserLogin, newUserPassword, selectedRole!!)
-                    // Reset form
-                    newUserName = ""
-                    newUserLogin = ""
-                    newUserPassword = ""
-                    selectedRole = null
-                },
+                onClick = onCreateUser,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = newUserName.isNotBlank() && newUserLogin.isNotBlank() && newUserPassword.isNotBlank() && selectedRole != null
+                enabled = state.newUserName.isNotBlank() && state.newUserLogin.isNotBlank() && state.newUserPassword.isNotBlank() && state.selectedRole != null && !state.isLoading
             ) {
-                Text("Создать пользователя")
+                if (state.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                } else {
+                    Text("Создать пользователя")
+                }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-            // --- Existing Users List ---
             Text("Существующие пользователи", style = MaterialTheme.typography.titleLarge)
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(users, key = { it.id }) { user ->
+                items(state.users, key = { it.id }) { user ->
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -203,15 +182,19 @@ fun AdminDashboardScreen(
     }
 }
 
-// --- PREVIEWS ---
 
 @Preview(name = "Admin Dashboard", showBackground = true)
 @Composable
 fun AdminDashboardScreenPreview() {
     MaterialTheme {
         AdminDashboardScreen(
-            users = DummyData.users,
-            onCreateUser = { _, _, _, _ -> },
+            state = AdminContract.State(users = DummyData.users),
+            snackbarHost = {},
+            onNameChange = {},
+            onLoginChange = {},
+            onPasswordChange = {},
+            onRoleChange = {},
+            onCreateUser = {},
             onNavigateUp = {}
         )
     }

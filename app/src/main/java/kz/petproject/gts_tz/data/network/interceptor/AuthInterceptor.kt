@@ -1,19 +1,22 @@
 package kz.petproject.gts_tz.data.network.interceptor
 
-import kz.petproject.gts_tz.data.local.TokenManager
+import kz.petproject.gts_tz.data.local.SessionManager
 import okhttp3.Interceptor
 import okhttp3.Response
 
-class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
+class AuthInterceptor(private val sessionManager: SessionManager) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val token = tokenManager.getToken()
-        val request = if (token != null) {
-            chain.request().newBuilder()
-                .header("Authorization", "Bearer $token")
+        val token = sessionManager.getToken()
+        val originalRequest = chain.request()
+
+        val requestWithHeader = if (token != null) {
+            originalRequest.newBuilder()
+                .header("x-access-token", token)
                 .build()
         } else {
-            chain.request()
+            originalRequest
         }
-        return chain.proceed(request)
+
+        return chain.proceed(requestWithHeader)
     }
 }

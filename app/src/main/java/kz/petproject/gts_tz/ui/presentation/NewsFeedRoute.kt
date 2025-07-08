@@ -1,16 +1,19 @@
-package kz.petproject.gts_tz.ui.presentation
+package kz.petproject.gts_tz.ui.presentation.news_feed
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
+import kz.petproject.gts_tz.ui.presentation.NewsFeedContract
 import kz.petproject.gts_tz.ui.presentation.NewsFeedScreen
+import kz.petproject.gts_tz.ui.presentation.NewsFeedViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun NewsFeedRoute(
-    navController: NavController,
+    // It no longer needs the NavController directly
+    onNavigateToAuth: () -> Unit,
     viewModel: NewsFeedViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -19,14 +22,8 @@ fun NewsFeedRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is NewsFeedContract.Effect.NavigateToAuth -> {
-                    navController.navigate("auth") {
-                        // Clear the entire back stack to prevent going back to a logged-in state
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
-                        }
-                        // Ensure there's only one instance of the auth screen
-                        launchSingleTop = true
-                    }
+                    // Call the hoisted lambda instead of navigating directly
+                    onNavigateToAuth()
                 }
             }
         }

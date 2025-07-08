@@ -2,7 +2,7 @@ package kz.petproject.gts_tz.ui.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kz.petproject.gts_tz.data.local.TokenManager
+import kz.petproject.gts_tz.data.local.SessionManager
 import kz.petproject.gts_tz.data.network.request.LoginRequest
 import kz.petproject.gts_tz.domain.use_cases.PostSiginInUseCase
 import kotlinx.coroutines.channels.Channel
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(
     private val postSiginInUseCase: PostSiginInUseCase,
-    private val tokenManager: TokenManager
+    private val sessionManager: SessionManager // Changed from TokenManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthContract.State())
@@ -39,8 +39,8 @@ class AuthViewModel(
                 password = _state.value.passwordInput
             )
             postSiginInUseCase(loginRequest)
-                .onSuccess { (_, token) ->
-                    tokenManager.saveToken(token)
+                .onSuccess { (user, token) ->
+                    sessionManager.saveSession(token, user) // Save full session
                     _state.update { it.copy(isLoading = false, error = null) }
                     _effect.send(AuthContract.Effect.NavigateToMain)
                 }
