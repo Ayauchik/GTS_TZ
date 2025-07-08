@@ -48,7 +48,7 @@ This project follows modern Android architecture principles, emphasizing separat
 
 -   [Android Studio](https://developer.android.com/studio) (Iguana 2023.2.1 or newer recommended)
 -   JDK 11 or higher
--   A running instance of the [GTS_TZ Backend](<link-to-your-backend-repo>).
+-   A running instance of the [GTS_TZ Backend](https://github.com/Ayauchik/GTS_TZ_backend).
 
 ### 1. Clone the Repository
 
