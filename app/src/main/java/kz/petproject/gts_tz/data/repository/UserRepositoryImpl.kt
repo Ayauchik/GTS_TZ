@@ -1,16 +1,21 @@
 package kz.petproject.gts_tz.data.repository
 
+import com.google.gson.Gson
 import kz.petproject.gts_tz.data.User
 import kz.petproject.gts_tz.data.network.api.Api
 import kz.petproject.gts_tz.data.network.mapper.UserMapper
 import kz.petproject.gts_tz.data.network.request.CreateUserRequest
 import kz.petproject.gts_tz.data.network.request.LoginRequest
+import kz.petproject.gts_tz.data.network.response.ErrorResponse
+import kz.petproject.gts_tz.data.network.response.UserResponse
 import kz.petproject.gts_tz.domain.repository.UserRepository
+import retrofit2.Response
 
 class UserRepositoryImpl(
     private val api: Api,
     private val userMapper: UserMapper
 ) : UserRepository {
+
     override suspend fun login(loginRequest: LoginRequest): Result<Pair<User, String>> {
         return try {
             val response = api.login(loginRequest)
@@ -20,8 +25,9 @@ class UserRepositoryImpl(
                 val token = responseBody.userResponse.token
                 Result.success(user to token)
             } else {
-                val errorMsg = response.errorBody()?.string() ?: response.message()
-                Result.failure(Exception("Login failed: $errorMsg"))
+                // Use the helper to get the clean error message
+                val errorMessage = parseErrorMessage(response)
+                Result.failure(Exception(errorMessage))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -32,18 +38,11 @@ class UserRepositoryImpl(
         return try {
             val response = api.createUser(createUserRequest)
             if (response.isSuccessful && response.body() != null) {
-                val createdUser = response.body()!!.user
-//                // Manually map the created user to our domain User model
-//                Result.success(User(
-//                    id = createdUser.id,
-//                    name = createdUser.name,
-//                    login = createdUser.login,
-//                    role = createdUser.role
-//                ))
                 Result.success(userMapper.fromRemoteCreateToDomain(response.body()!!))
             } else {
-                val errorMsg = response.errorBody()?.string() ?: response.message()
-                Result.failure(Exception("User creation failed: $errorMsg"))
+                // Reuse the same helper for consistent error handling
+                val errorMessage = parseErrorMessage(response)
+                Result.failure(Exception(errorMessage))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -54,13 +53,34 @@ class UserRepositoryImpl(
         val response = api.getAllUsers()
         if (response.isSuccessful && response.body() != null) {
             val userResponses = response.body()!!
-            // Map each UserResponse in the list to a domain User object
             val domainUsers = userResponses.map { userMapper.fromRemoteToDomain(it) }
             Result.success(domainUsers)
         } else {
-            Result.failure(Exception(response.errorBody()?.string() ?: "Failed to fetch users"))
+            val errorMessage = parseErrorMessage(response)
+            Result.failure(Exception(errorMessage))
         }
     } catch (e: Exception) {
         Result.failure(e)
+    }
+
+    /**
+     * A private helper function to parse the error body from a Retrofit Response.
+     */
+    private fun parseErrorMessage(response: Response<*>): String {
+        val errorBody = response.errorBody()?.string()
+        if (errorBody != null) {
+            return try {
+                // Use Gson to parse the JSON error string into our ErrorResponse object
+                val gson = Gson()
+                val errorResponse = gson.fromJson(errorBody, ErrorResponse::class.java)
+                // Return the clean message
+                errorResponse.message
+            } catch (e: Exception) {
+                // If the error body is not a valid JSON, return the raw string
+                errorBody
+            }
+        }
+        // Fallback if there's no error body
+        return "An unknown error occurred"
     }
 }
